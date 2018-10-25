@@ -1,0 +1,9 @@
+{
+  "facebookId": "257398624863602",
+  "facebookSecret" : "ef4ae6e55c4219b0102b24938995deb9",
+  "JWT-Key" : "awdA984211253574dasv987qqwdapporoasd",
+  "JWT-Token-Expiration" : 20,
+  "JWT-RefreshToken-Expiration" : 3600,
+  "bcrypt-number" : 10,
+  "mongodb-host" : "mongodb://localhost/test"
+}
