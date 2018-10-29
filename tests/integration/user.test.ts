@@ -71,7 +71,7 @@ describe('User REST API', () => {
             expect(responseGet.body.length).toEqual(2);
         });
 
-        it('Should return 401 with the user is not logged in', async () : Promise<void> => {
+        it('Should return 401 if the user is not logged in', async () : Promise<void> => {
             const responseGet = await request.get('/api/users');
 
             expect(responseGet.status).toEqual(401);

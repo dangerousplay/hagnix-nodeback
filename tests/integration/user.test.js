@@ -63,7 +63,7 @@ describe('User REST API', () => {
             expect(responseGet.body).toBeDefined();
             expect(responseGet.body.length).toEqual(2);
         });
-        it('Should return 401 with the user is not logged in', async () => {
+        it('Should return 401 if the user is not logged in', async () => {
             const responseGet = await request.get('/api/users');
             expect(responseGet.status).toEqual(401);
         });

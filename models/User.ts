@@ -26,7 +26,12 @@ export interface UserSchema {
     house:String,
     admin:Boolean,
     roles:Array<Roles>,
-    email:String
+    email:String,
+    login: {
+        lastAttempt: Date,
+        attempts: Number,
+        locked: Boolean
+    }
 
     save?() : void;
     delete?() : void;
@@ -87,6 +92,15 @@ export const userSchema:Schema = new Schema({
     admin: {
         type: Boolean,
         default: false
+    },
+
+    login: {
+      type: {
+          lastAttempt: Date,
+          attempts: Number,
+          locked: Boolean
+      },
+      required: false
     },
 
     password: {

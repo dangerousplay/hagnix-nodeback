@@ -28,19 +28,56 @@ exports.router.post('/', Validation_1.validateBody(validationResult), async (req
         userdb = await User_1.User.findOne({ email: req.body.identifier }).select({ password: 1, admin: 1, roles: 1 });
     if (!userdb)
         return res.status(400).send('Bad credentials!');
+    const epoch = Math.round(new Date().getTime() / 1000);
+    //@ts-ignore
+    const userAttempt = Math.round(userdb.login.lastAttempt.getTime() / 1000);
+    //@ts-ignore
+    if (userdb.login.locked) {
+        if ((epoch - userAttempt) < 3600) {
+            return res.status(403).send({
+                message: `Your account is locked due to a multiple wrong password attempts.`,
+                //@ts-ignore
+                lastAttempt: userdb.login.lastAttempt
+            });
+        }
+        else {
+            //@ts-ignore
+            userdb.login.attempts = 0;
+        }
+    }
+    //@ts-ignore
     const equal = bcrypt.compareSync(req.body.password, userdb.password);
-    if (!equal)
+    if (!equal) {
+        //@ts-ignore
+        userdb.login.attempts++;
+        //@ts-ignore
+        userdb.login.lastAttempt = new Date();
+        //@ts-ignore
+        if (userdb.login.attempts > 5)
+            userdb.login.locked = true;
+        userdb.save();
         return res.status(400).send('Bad credentials!');
+    }
+    //@ts-ignore
+    userdb.login.attempts = 0;
+    //@ts-ignore
+    userdb.login.lastAttempt = new Date();
+    //@ts-ignore
+    userdb.login.locked = false;
     const refreshToken = {
         identifier: req.body.identifier,
+        //@ts-ignore
         admin: userdb.admin,
+        //@ts-ignore
         roles: userdb.roles,
         refreshToken: true
     };
     const jrToken = jwt.sign(refreshToken, constanst_1.JWTKEY, { expiresIn: constanst_1.JWTRTokenExpiration });
     const jToken = jwt.sign({
         identifier: req.body.identifier,
+        //@ts-ignore
         admin: userdb.admin,
+        //@ts-ignore
         roles: userdb.roles,
         refreshToken: false
     }, constanst_1.JWTKEY, { expiresIn: constanst_1.JWTTokenExpiration });
@@ -62,6 +99,7 @@ exports.router.get('/token', async (req, res, next) => {
             return res.clearCookie(Auth_1.TOKEN_COOKIE).status(400).send('Invalid Token');
         }
         user.refreshToken = false;
+        //@ts-ignore
         user.exp = new Date().getTime() + constanst_1.JWTTokenExpiration;
         res.send({ token: jwt.sign(user, constanst_1.JWTKEY) });
     }

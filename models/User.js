@@ -61,6 +61,14 @@ exports.userSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false
     },
+    login: {
+        type: {
+            lastAttempt: Date,
+            attempts: Number,
+            locked: Boolean
+        },
+        required: false
+    },
     password: {
         type: String,
         minlength: 8,
