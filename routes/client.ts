@@ -5,7 +5,6 @@ import * as Joi from 'joi';
 import {validateBody, validateParams} from "../middleware/Validation";
 import {JWTTokenExpiration} from "../config/constanst";
 
-
 export const router: Router = Router();
 
 const authAdmin = new AuthBuilder().setAdminOnly(true).build();

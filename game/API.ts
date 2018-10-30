@@ -9,7 +9,7 @@ import * as uuid from 'uuid';
 import {EventEmitter} from "events";
 import {ClientOpts, RedisClient} from "redis";
 
-interface RID{
+interface RID {
     id: String,
     resolve: any,
     timer: any

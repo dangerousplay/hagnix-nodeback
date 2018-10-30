@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {User, UserToken} from "../models/User";
+import {User, UserSchema, UserToken} from "../models/User";
 import {TOKEN_COOKIE} from "../middleware/Auth";
 import {error} from "../init/Logger";
 import * as jwt from "jsonwebtoken";
@@ -15,7 +15,7 @@ export const router: Router = Router();
 const identifier = /([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})/;
 
 router.post('/', validateBody(validationResult), async (req, res, next) => {
-    let userdb;
+    let userdb: UserSchema;
 
     // language=RegExp
     if ((req.body.identifier as String).match("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})"))
@@ -29,46 +29,35 @@ router.post('/', validateBody(validationResult), async (req, res, next) => {
     //@ts-ignore
     const userAttempt = Math.round(userdb.login.lastAttempt.getTime() / 1000);
 
-    //@ts-ignore
     if(userdb.login.locked){
         if((epoch - userAttempt) < 3600) {
             return res.status(403).send({
                 message: `Your account is locked due to a multiple wrong password attempts.`,
-                //@ts-ignore
                 lastAttempt: userdb.login.lastAttempt
             });
         } else {
-            //@ts-ignore
             userdb.login.attempts = 0;
         }
     }
 
-    //@ts-ignore
     const equal = bcrypt.compareSync(req.body.password, userdb.password);
 
     if (!equal) {
-        //@ts-ignore
         userdb.login.attempts++;
-        //@ts-ignore
         userdb.login.lastAttempt = new Date();
-        //@ts-ignore
         if(userdb.login.attempts > 5) userdb.login.locked = true;
 
         userdb.save();
         return res.status(400).send('Bad credentials!');
     }
-    //@ts-ignore
+
     userdb.login.attempts = 0;
-    //@ts-ignore
     userdb.login.lastAttempt = new Date();
-    //@ts-ignore
     userdb.login.locked = false;
 
     const refreshToken: UserToken = {
         identifier: req.body.identifier,
-        //@ts-ignore
         admin: userdb.admin,
-        //@ts-ignore
         roles: userdb.roles,
         refreshToken: true
     };
@@ -77,9 +66,7 @@ router.post('/', validateBody(validationResult), async (req, res, next) => {
 
     const jToken = jwt.sign({
             identifier: req.body.identifier,
-            //@ts-ignore
             admin: userdb.admin,
-            //@ts-ignore
             roles: userdb.roles,
             refreshToken: false
         },
@@ -90,8 +77,7 @@ router.post('/', validateBody(validationResult), async (req, res, next) => {
     res.send({token: jToken});
 });
 
-//@ts-ignore
-router.get('/token', async (req, res, next) => {
+router.get('/token', async (req, res, next) : Promise<any> => {
     const token = req.cookies[TOKEN_COOKIE];
 
     try {

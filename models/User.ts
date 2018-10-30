@@ -1,4 +1,4 @@
-import {model, Schema, Types} from "mongoose"
+import {model, Schema, Document, Types} from "mongoose"
 import * as bcrypt from 'bcrypt';
 import {EmailREGEX} from "../config/constanst";
 import {Roles} from "../middleware/Auth";
@@ -15,26 +15,24 @@ export interface UserToken {
     roles: Array<Roles>
 }
 
-export interface UserSchema {
-    id?: String
-    name:String,
-    CPF:String,
-    CEP:String,
-    bairro:String,
-    street:String,
-    password:String,
-    house:String,
-    admin:Boolean,
+export interface UserSchema extends Document {
+    id?: string
+    name: string,
+    CPF: string,
+    CEP: string,
+    bairro: string,
+    street: string,
+    password: string,
+    house: string,
+    admin: boolean,
     roles:Array<Roles>,
-    email:String,
+    email: string,
     login: {
         lastAttempt: Date,
-        attempts: Number,
-        locked: Boolean
+        attempts: number,
+        locked: boolean
     }
 
-    save?() : void;
-    delete?() : void;
 }
 
 export const userSchema:Schema = new Schema({
