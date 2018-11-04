@@ -20,7 +20,9 @@ build:
 
 deploy:
   stage: deploy
-  image: linkyard/docker-helm
+  before_script:
+    - echo "Helm before deploy"
+    - helm version --kubeconfig /var/run/k8s.config
   script:
     - helm init --upgrade --kubeconfig /var/run/k8s.config
     - helm version --kubeconfig /var/run/k8s.config
