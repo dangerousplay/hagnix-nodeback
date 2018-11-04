@@ -23,7 +23,6 @@ deploy:
   stage: deploy
   before_script:
     - echo "Helm before deploy"
-    - helm version --kubeconfig /var/run/k8s.config
   script:
     - helm init --host ${HELM_HOST}
     - helm version --host ${HELM_HOST}
