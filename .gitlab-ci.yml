@@ -20,9 +20,7 @@ build:
 
 deploy:
   stage: deploy
-  image: linkyard/docker-helm
-  services:
-    - name: docker:stable
+  image: alpine/helm
   script:
     - echo "Helm deploying application"
     - echo "HELM HOST $HELM_HOST"
