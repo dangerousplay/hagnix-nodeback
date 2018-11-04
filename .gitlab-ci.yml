@@ -2,6 +2,7 @@ image: docker:stable
 
 stages:
   - build
+  - deploy
 
 variables:
   CONTAINER_IMAGE: hagnix/nodeback
@@ -17,3 +18,9 @@ build:
   - echo "Building Dockerfile-based application..."
   - docker build -t ${CONTAINER_IMAGE_LATEST} .
 
+deploy:
+  stage: deploy
+  image: linkyard/docker-helm
+  script:
+    - echo "Helm deploying application"
+    - echo "HELM HOST $HELM_HOST"
