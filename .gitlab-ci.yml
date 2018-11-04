@@ -23,6 +23,5 @@ deploy:
   image: dtzar/helm-kubectl
   script:
     - echo "Helm deploying application"
-    - echo "HELM HOST $HELM_HOST"
-    - cat /var/run/k8s.config
-    - helm version --kubeconfig /var/run/k8s.config
+    - helm init
+    - helm version
