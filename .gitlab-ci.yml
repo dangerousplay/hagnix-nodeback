@@ -20,7 +20,7 @@ build:
 
 deploy:
   stage: deploy
-  image: alpine/helm
+  image: dtzar/helm-kubectl
   script:
     - echo "Helm deploying application"
     - echo "HELM HOST $HELM_HOST"
