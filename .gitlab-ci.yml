@@ -7,10 +7,14 @@ stages:
 variables:
   CONTAINER_IMAGE: hagnix/nodeback
   CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:${CI_PIPELINE_ID}
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://localhost:2375
 
 build:
   stage: build
   image: docker:latest
+  services:
+    - name: docker:dind
   before_script:
     - echo "Docker before build"
     - docker info
