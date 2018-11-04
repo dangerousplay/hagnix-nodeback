@@ -7,7 +7,6 @@ stages:
 variables:
   CONTAINER_IMAGE: hagnix/nodeback
   CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:${CI_PIPELINE_ID}
-  HELM_HOST:
 
 build:
   stage: build
