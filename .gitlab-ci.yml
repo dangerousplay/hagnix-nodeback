@@ -24,5 +24,6 @@ deploy:
   before_script:
     - echo "Helm before deploy"
   script:
+    - echo "Helm deploying application"
     - helm init --host ${HELM_HOST}
     - helm version --host ${HELM_HOST}
