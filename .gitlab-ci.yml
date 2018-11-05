@@ -5,23 +5,46 @@ stages:
   - deploy
 
 variables:
-  CONTAINER_IMAGE: hagnix/nodeback
+  CONTAINER_IMAGE: dangerousplay/hagnix-nodeback
   CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:${CI_PIPELINE_ID}
+  DOCKER_HOST: tcp://localhost:2375
+  DOCKER_DRIVER: overlay2
 
 build:
   stage: build
   image: docker:latest
+  only:
+    - master
+  services:
+    - docker:dind
   before_script:
     - echo "Docker before build"
     - docker info
   script:
-  - echo "Building Dockerfile-based application..."
-  - docker build -t ${CONTAINER_IMAGE_LATEST} .
+    - echo "Building Dockerfile-based application..."
+    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}
+    - docker build -t ${CONTAINER_IMAGE_LATEST} .
+    - docker push ${CONTAINER_IMAGE_LATEST}
+    - docker tag ${CONTAINER_IMAGE_LATEST} ${CONTAINER_IMAGE}:latest
+    - docker push ${CONTAINER_IMAGE}:latest
 
 deploy:
   stage: deploy
   image: dtzar/helm-kubectl
+  only:
+    - master
   script:
     - echo "Helm deploying application"
-    - helm init
-    - helm version
+    - helm init --upgrade
+    - helm upgrade --install hagnix ${HAGNIX_HELM_URL} --namespace hagnix --set backend.node.image=${CONTAINER_IMAGE_LATEST}
+
+deploy_production:
+  stage: deploy
+  image: dtzar/helm-kubectl
+  when: manual
+  only:
+    - master
+  script:
+    - echo "Helm Deploying on Production"
+    - helm init --upgrade
+    - helm upgrade --install hagnix ${HAGNIX_HELM_URL} --namespace hagnix --set backend.node.image=${CONTAINER_IMAGE_LATEST},cloud=GKE
