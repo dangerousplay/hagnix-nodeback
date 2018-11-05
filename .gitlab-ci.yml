@@ -1,0 +1,27 @@
+image: docker:stable
+
+stages:
+  - build
+  - deploy
+
+variables:
+  CONTAINER_IMAGE: hagnix/nodeback
+  CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:${CI_PIPELINE_ID}
+
+build:
+  stage: build
+  image: docker:latest
+  before_script:
+    - echo "Docker before build"
+    - docker info
+  script:
+  - echo "Building Dockerfile-based application..."
+  - docker build -t ${CONTAINER_IMAGE_LATEST} .
+
+deploy:
+  stage: deploy
+  image: dtzar/helm-kubectl
+  script:
+    - echo "Helm deploying application"
+    - helm init
+    - helm version
