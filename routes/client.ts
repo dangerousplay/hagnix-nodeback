@@ -49,7 +49,7 @@ router.post('/pardon',  authAdmin, validateBody(validator), async (req, res, nex
     }
 });
 
-router.post('/authorize', auth, validateBody(validator), async (req, res, next) : Promise<any> => {
+router.post('/authorize', authAdmin, validateBody(validator), async (req, res, next) : Promise<any> => {
    const result = await clientApi.authorize(req.body.email, JWTTokenExpiration);
 
     if(result == 200){

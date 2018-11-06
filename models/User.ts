@@ -24,6 +24,7 @@ export interface UserSchema extends Document {
     street: string,
     password: string,
     house: string,
+    complement: string,
     admin: boolean,
     roles:Array<Roles>,
     email: string,
@@ -78,6 +79,11 @@ export const userSchema:Schema = new Schema({
         type: String,
         required: true,
         match: /\d/
+    },
+
+    complement: {
+        type: String,
+        required: true
     },
 
     roles : {

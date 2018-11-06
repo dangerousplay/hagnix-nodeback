@@ -51,6 +51,10 @@ exports.userSchema = new mongoose_1.Schema({
         required: true,
         match: /\d/
     },
+    complement: {
+        type: String,
+        required: true
+    },
     roles: {
         type: [String],
         //@ts-ignore

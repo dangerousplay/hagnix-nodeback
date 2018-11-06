@@ -50,7 +50,7 @@ exports.router.post('/pardon', authAdmin, Validation_1.validateBody(validator), 
         res.status(500).send('Player not pardoned.');
     }
 });
-exports.router.post('/authorize', Auth_1.auth, Validation_1.validateBody(validator), async (req, res, next) => {
+exports.router.post('/authorize', authAdmin, Validation_1.validateBody(validator), async (req, res, next) => {
     const result = await API_1.clientApi.authorize(req.body.email, constanst_1.JWTTokenExpiration);
     if (result == 200) {
         res.send('Player authorized sucessfully.');
