@@ -11,6 +11,7 @@ import * as logger from "./init/Logger";
 import * as authRouter from "./routes/auth";
 import * as client from './routes/client';
 import * as health from './routes/health';
+import * as server from './routes/server';
 import {clientApi} from "./game/API";
 import {info} from "winston";
 
@@ -27,6 +28,7 @@ app.use(cors());
 app.use('/api/auth',authRouter.router);
 app.use('/api/client', client.router);
 app.use('/health', health.router);
+app.use('/server', server.router);
 
 async function loadModules() : Promise<void> {
     logger.init();

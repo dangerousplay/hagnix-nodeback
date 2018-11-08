@@ -11,8 +11,8 @@ const User_1 = require("../models/User");
 const Auth_1 = require("../middleware/Auth");
 const Validation_1 = require("../middleware/Validation");
 const Joi = __importStar(require("joi"));
+const API_1 = require("../game/API");
 const restful = require('node-restful');
-const cors = require('cors');
 const methods = ['get', 'post', 'put', 'delete'];
 const authAdmin = new Auth_1.AuthBuilder().setAdminOnly(true).build();
 const authLogged = new Auth_1.AuthBuilder().build();
@@ -22,6 +22,26 @@ function route(route, app) {
     methods.filter((p) => p == 'get' || p == 'post' || p == 'delete' || p == 'put')
         .forEach((p) => {
         resource.before(p, authAdmin);
+    });
+    resource.after('delete', async (req, res, next) => {
+        const request = await API_1.clientApi.deletePlayer(req.params.id);
+        res.sendStatus(request);
+        next();
+    });
+    resource.before('post', async (req, res, next) => {
+        const player = await API_1.clientApi.getPlayer(req.body.email);
+        if (!player) {
+            next();
+        }
+        else {
+            res.status(400).send('email already in use');
+        }
+    });
+    resource.after('post', async (req, res, next) => {
+        const player = req.body;
+        const playerDB = await User_1.User.findOne({ email: player.email }).select({ _id: 1 });
+        await API_1.clientApi.createPlayer(player.email, player.password, playerDB._id);
+        next();
     });
     //@ts-ignore
     resource.route('changepw', async (req, res, next) => {

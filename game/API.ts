@@ -9,22 +9,38 @@ import * as uuid from 'uuid';
 import {EventEmitter} from "events";
 import {ClientOpts, RedisClient} from "redis";
 
+
+const host = process.env.REDIS_HOST;
+const password = process.env.REDIS_PASSWORD;
+const port = process.env.REDIS_PORT;
+
+const queue: Array<RID | undefined> = [];
+
+const event = new EventEmitter();
+
+let sender: RedisClient;
+let listener: RedisClient;
+
+startRedis();
+
 interface RID {
     id: String,
     resolve: any,
     timer: any
 }
 
-const host = process.env.REDIS_HOST;
-const password = process.env.REDIS_PASSWORD;
-const port = process.env.REDIS_PORT;
-
-const queue:Array<RID | undefined> = [];
-
-const event = new EventEmitter();
-
-let sender: RedisClient;
-let listener: RedisClient;
+enum Command {
+    KICK = 'KICK',
+    LIST = 'LIST',
+    GET_PLAYER = 'GETPLAYER',
+    BAN = 'BAN',
+    PARDON = 'PARDON',
+    LOGGED = 'LOGGED',
+    AUTHORIZE = 'AUTHORIZE',
+    CREATE_PLAYER = 'CREATE_PLAYER',
+    DELETE_PLAYER = 'DELETE_PLAYER',
+    CHANGE_PLAYER = 'CHANGE_PLAYER'
+}
 
 function startRedis(){
     //@ts-ignore
@@ -51,19 +67,6 @@ function startRedis(){
     }
 }
 
-startRedis();
-
-enum Command {
-    KICK = 'KICK',
-    LIST = 'LIST',
-    GET_PLAYER = 'GETPLAYER',
-    BAN = 'BAN',
-    PARDON = 'PARDON',
-    LOGGED = 'LOGGED',
-    AUTHORIZE = 'AUTHORIZE'
-}
-
-
 export interface ClientAPI {
 
     isLogged(email: String): Promise<Number>;
@@ -79,11 +82,21 @@ export interface ClientAPI {
     getOnlinePlayers(): Promise<Array<Player>>;
 
     pardonPlayer(email: String): Promise<Number>;
+
+    createPlayer(email: String, password: String, objectId: String) : Promise<Number>;
+
+    deletePlayer(emailOrId: String) : Promise<Number>;
+
+    changePlayer(player: Player) : Promise<Number>
 }
 
 export interface Player {
     email: String,
-    username: String
+    name: String,
+    admin: boolean,
+    token: number,
+    gold: number,
+    password: String
 }
 
 interface Request<T> {
@@ -145,6 +158,18 @@ class ClientImplementation implements ClientAPI {
     async pardonPlayer(email: String): Promise<Number> {
         const response:Response<String> = await createRequest(Command.PARDON, [{email}]);
         return response.status;
+    }
+
+    async createPlayer(email: String, password: String, objectId: String): Promise<Number> {
+        return (await createRequest(Command.CREATE_PLAYER, [{email, password, object_id: objectId}])).status;
+    }
+
+    async changePlayer(player: Player): Promise<Number> {
+        return (await createRequest(Command.CHANGE_PLAYER, [player])).status
+    }
+
+    async deletePlayer(id: String): Promise<Number> {
+        return (await createRequest(Command.DELETE_PLAYER, [id])).status;
     }
 
 }

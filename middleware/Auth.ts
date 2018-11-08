@@ -7,7 +7,7 @@ import {RequestHandler} from "express";
 export const TOKEN_COOKIE = 'token';
 export const AUTH_HEADER = 'authorization';
 
-export async function auth(req, res, next): Promise<UserSchema | void> {
+export async function auth(req, res, next, callNext = true): Promise<UserSchema | void> {
     const cjwt = req.headers[AUTH_HEADER];
 
     if (!cjwt) {
@@ -32,6 +32,7 @@ export async function auth(req, res, next): Promise<UserSchema | void> {
 
         if (!userdb) return res.status(400).send('Invalid token!');
 
+        if(callNext)
         next();
         //@ts-ignore
         return userdb;

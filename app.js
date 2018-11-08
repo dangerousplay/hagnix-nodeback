@@ -18,6 +18,7 @@ const logger = __importStar(require("./init/Logger"));
 const authRouter = __importStar(require("./routes/auth"));
 const client = __importStar(require("./routes/client"));
 const health = __importStar(require("./routes/health"));
+const server = __importStar(require("./routes/server"));
 const API_1 = require("./game/API");
 const winston_1 = require("winston");
 exports.app = express();
@@ -31,6 +32,7 @@ exports.app.use(cors());
 exports.app.use('/api/auth', authRouter.router);
 exports.app.use('/api/client', client.router);
 exports.app.use('/health', health.router);
+exports.app.use('/server', server.router);
 async function loadModules() {
     logger.init();
     Rest.init(exports.app);

@@ -1,14 +1,10 @@
-import {UserSchema, userSchema} from "../models/User";
-import {NextFunction} from "express";
-import {auth} from "../middleware/Auth";
-import {info} from "winston";
+import {User, UserSchema, userSchema} from "../models/User";
 import {AuthBuilder} from "../middleware/Auth";
 import {validateBody} from "../middleware/Validation";
 import * as Joi from "joi";
-import {User} from "../models/User";
+import {clientApi} from "../game/API";
 
 const restful = require('node-restful');
-const cors = require('cors');
 const methods = ['get', 'post', 'put', 'delete'];
 
 const authAdmin = new AuthBuilder().setAdminOnly(true).build();
@@ -21,6 +17,32 @@ export function route(route: String, app: Express.Application) {
     methods.filter((p) => p == 'get' || p == 'post' || p == 'delete' || p == 'put')
         .forEach((p) => {
         resource.before(p, authAdmin)
+    });
+
+    resource.after('delete', async (req:any, res:any, next:any) : Promise<void> => {
+       const request = await clientApi.deletePlayer(req.params.id);
+
+       res.sendStatus(request);
+        next();
+    });
+
+    resource.before('post', async (req:any, res:any, next:any) : Promise<void> => {
+       const player = await clientApi.getPlayer(req.body.email);
+
+        if(!player){
+          next()
+        } else {
+            res.status(400).send('email already in use');
+        }
+    });
+
+    resource.after('post', async (req:any, res:any, next:any) : Promise<void> => {
+        const player: UserSchema = req.body;
+        const playerDB = await User.findOne({email: player.email}).select({_id: 1});
+
+        await clientApi.createPlayer(player.email, player.password, playerDB._id);
+
+        next();
     });
 
     //@ts-ignore

@@ -17,8 +17,6 @@ const bcrypt = __importStar(require("bcrypt"));
 const joi = __importStar(require("joi"));
 const Validation_1 = require("../middleware/Validation");
 exports.router = express_1.Router();
-// language=RegExp
-const identifier = /([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})/;
 exports.router.post('/', Validation_1.validateBody(validationResult), async (req, res, next) => {
     let userdb;
     // language=RegExp

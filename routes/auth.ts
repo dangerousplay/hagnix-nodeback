@@ -11,9 +11,6 @@ import {validateBody} from "../middleware/Validation";
 
 export const router: Router = Router();
 
-// language=RegExp
-const identifier = /([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})/;
-
 router.post('/', validateBody(validationResult), async (req, res, next) => {
     let userdb: UserSchema;
 

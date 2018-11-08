@@ -63,11 +63,13 @@ router.get('/logged/:email', auth, validateParams(validator), async (req, res, n
    const result = await clientApi.isLogged(req.params.email);
 
     if(result == 200){
-        res.send('Player online.');
+        res.send(result);
     } else {
         res.status(404).send('Player not online.');
     }
 });
+
+router.get('/account')
 
 function validator(body:any){
     return Joi.validate(body, Joi.object().keys({

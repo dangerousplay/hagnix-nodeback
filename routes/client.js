@@ -62,12 +62,13 @@ exports.router.post('/authorize', authAdmin, Validation_1.validateBody(validator
 exports.router.get('/logged/:email', Auth_1.auth, Validation_1.validateParams(validator), async (req, res, next) => {
     const result = await API_1.clientApi.isLogged(req.params.email);
     if (result == 200) {
-        res.send('Player online.');
+        res.send(result);
     }
     else {
         res.status(404).send('Player not online.');
     }
 });
+exports.router.get('/account');
 function validator(body) {
     return Joi.validate(body, Joi.object().keys({
         email: Joi.string().email().required()
