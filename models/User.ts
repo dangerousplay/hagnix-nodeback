@@ -83,7 +83,7 @@ export const userSchema:Schema = new Schema({
 
     complement: {
         type: String,
-        required: true
+        required: false
     },
 
     roles : {

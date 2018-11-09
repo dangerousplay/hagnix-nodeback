@@ -53,7 +53,7 @@ exports.userSchema = new mongoose_1.Schema({
     },
     complement: {
         type: String,
-        required: true
+        required: false
     },
     roles: {
         type: [String],

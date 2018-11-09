@@ -45,13 +45,35 @@ async function reportHealth() {
 reportHealth();
 //TODO remove this NOW
 async function teste() {
+    // const user = new User({
+    //     CPF: "04908861082",
+    //     CEP: "92410535",
+    //     password: "1234567891",
+    //     name: "Davi Henrique3",
+    //     house: "587",
+    //     complement: "",
+    //     bairro: "Igara",
+    //     street: "Doutor Alfredo Ângelo Filho",
+    //     admin: true,
+    //     roles: [],
+    //     email: 'gm.davi.gm3@live.com',
+    //     login: {
+    //         attempts: 0,
+    //         lastAttempt: new Date(),
+    //         locked: false
+    //     }
+    // }) as UserSchema;
+    //
+    // await user.save();
     const auth = await API_1.clientApi.authorize('davificanhahenrique@hotmail.com', 60 * 60 * 1000);
     winston_1.info(`Authorize returned: ${auth}`);
-    const retunerd = await API_1.clientApi.isLogged('davificanhahenrique@hotmail.com');
-    winston_1.info(`isLogged returned on api: ${retunerd}`);
-    const players = await API_1.clientApi.getOnlinePlayers();
-    winston_1.info(`Online players ${JSON.stringify(players)}`);
-    const pardon = await API_1.clientApi.pardonPlayer("davificanhahenrique@hotmail.com");
-    winston_1.info(`Pardon: ${pardon}`);
+    setInterval(async () => {
+        const retunerd = await API_1.clientApi.isLogged('davificanhahenrique@hotmail.com');
+        winston_1.info(`isLogged returned on api: ${retunerd}`);
+        const players = await API_1.clientApi.getOnlinePlayers();
+        winston_1.info(`Online players ${JSON.stringify(players)}`);
+        const server = await API_1.clientApi.serverInfo();
+        winston_1.info(`Server info: ${JSON.stringify(server)}`);
+    }, 3000);
 }
 teste();

@@ -48,7 +48,7 @@ function startRedis(){
     let connection:ClientOpts = null;
 
     if(host && password && port)
-       connection = {host,port: parseInt(port),password};
+       connection = {host, port: parseInt(port), password};
 
     try {
         info(`Connecting on redis: ${connection != null ? JSON.stringify({host, port}):'localhost'}`);

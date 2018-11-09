@@ -35,6 +35,7 @@ var Command;
     Command["CREATE_PLAYER"] = "CREATE_PLAYER";
     Command["DELETE_PLAYER"] = "DELETE_PLAYER";
     Command["CHANGE_PLAYER"] = "CHANGE_PLAYER";
+    Command["SERVER_INFO"] = "SERVER_INFO";
 })(Command || (Command = {}));
 function startRedis() {
     //@ts-ignore
@@ -103,6 +104,9 @@ class ClientImplementation {
     }
     async deletePlayer(id) {
         return (await createRequest(Command.DELETE_PLAYER, [id])).status;
+    }
+    async serverInfo() {
+        return await createRequest(Command.SERVER_INFO, []);
     }
 }
 function generateToken() {
