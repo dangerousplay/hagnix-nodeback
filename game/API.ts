@@ -39,7 +39,8 @@ enum Command {
     AUTHORIZE = 'AUTHORIZE',
     CREATE_PLAYER = 'CREATE_PLAYER',
     DELETE_PLAYER = 'DELETE_PLAYER',
-    CHANGE_PLAYER = 'CHANGE_PLAYER'
+    CHANGE_PLAYER = 'CHANGE_PLAYER',
+    SERVER_INFO = 'SERVER_INFO'
 }
 
 function startRedis(){
@@ -87,7 +88,15 @@ export interface ClientAPI {
 
     deletePlayer(emailOrId: String) : Promise<Number>;
 
-    changePlayer(player: Player) : Promise<Number>
+    changePlayer(player: Player) : Promise<Number>;
+
+    serverInfo(): Promise<Server>;
+}
+
+export interface Server {
+    name: String,
+    players: number,
+    capacity: number
 }
 
 export interface Player {
@@ -170,6 +179,10 @@ class ClientImplementation implements ClientAPI {
 
     async deletePlayer(id: String): Promise<Number> {
         return (await createRequest(Command.DELETE_PLAYER, [id])).status;
+    }
+
+    async serverInfo(): Promise<Server> {
+        return await createRequest(Command.SERVER_INFO, []);
     }
 
 }

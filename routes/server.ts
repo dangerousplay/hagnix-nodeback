@@ -4,6 +4,6 @@ import {clientApi} from "../game/API";
 
 export const router: Router = Router();
 
-router.get('/status', auth, ((req, res, next) => {
-    res.send(await clientApi.getOnlinePlayers());
-}));
+router.get('/status', auth, async (req, res, next) : Promise<void> => {
+    res.send([await clientApi.serverInfo()]);
+});
