@@ -1,4 +1,4 @@
-FROM node:10 as builder
+FROM node:11 as builder
 
 RUN mkdir -p /app/bin
 
@@ -10,7 +10,7 @@ WORKDIR /app
 
 RUN npm install --production
 
-FROM node:10-alpine
+FROM node:11-alpine
 
 WORKDIR /app
 
