@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import * as joi from 'joi';
 import {ValidationResult} from "joi";
 import {validateBody} from "../middleware/Validation";
+import {clientApi} from "../game/API";
 
 export const router: Router = Router();
 
@@ -72,9 +73,10 @@ router.post('/', validateBody(validationResult), async (req, res, next) => {
         {expiresIn: JWTTokenExpiration});
     res.cookie(TOKEN_COOKIE, jrToken, {secure: false, httpOnly: true});
 
-    delete userdb.password;
+    userdb.password = "";
 
     res.send({token: jToken, user: userdb});
+    await clientApi.authorize(userdb.email, JWTRTokenExpiration);
 });
 
 router.post('/token', validateBody(validateIdentifier), async (req, res, next) : Promise<any> => {
@@ -109,12 +111,25 @@ router.post('/token', validateBody(validateIdentifier), async (req, res, next) :
 });
 
 
-router.post('/revoke', ((req, res, next) => {
+router.post('/revoke',  (async (req, res, next) => {
     const token = req.cookies[TOKEN_COOKIE];
 
     if(!token) return res.status(400).send('No cookie provided!');
 
     res.clearCookie(TOKEN_COOKIE);
+    try{
+        const uToken: UserToken = jwt.verify(token, JWTKEY) as UserToken;
+        let userdb: UserSchema;
+
+        if ((uToken.identifier as String).match("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})"))
+            userdb = await User.findOne({CPF: uToken.identifier});
+        else
+            userdb = await User.findOne({email: uToken.identifier});
+
+        await clientApi.authorize(userdb.email,0);
+    }catch (e) {
+
+    }
 }));
 
 function validateIdentifier(body: any){

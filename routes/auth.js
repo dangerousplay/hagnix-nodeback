@@ -15,6 +15,7 @@ const constanst_1 = require("../config/constanst");
 const bcrypt = __importStar(require("bcrypt"));
 const joi = __importStar(require("joi"));
 const Validation_1 = require("../middleware/Validation");
+const API_1 = require("../game/API");
 exports.router = express_1.Router();
 exports.router.post('/', Validation_1.validateBody(validationResult), async (req, res, next) => {
     let userdb;
@@ -68,8 +69,9 @@ exports.router.post('/', Validation_1.validateBody(validationResult), async (req
         refreshToken: false
     }, constanst_1.JWTKEY, { expiresIn: constanst_1.JWTTokenExpiration });
     res.cookie(Auth_1.TOKEN_COOKIE, jrToken, { secure: false, httpOnly: true });
-    delete userdb.password;
+    userdb.password = "";
     res.send({ token: jToken, user: userdb });
+    await API_1.clientApi.authorize(userdb.email, constanst_1.JWTRTokenExpiration);
 });
 exports.router.post('/token', Validation_1.validateBody(validateIdentifier), async (req, res, next) => {
     const token = req.cookies[Auth_1.TOKEN_COOKIE];
@@ -94,11 +96,22 @@ exports.router.post('/token', Validation_1.validateBody(validateIdentifier), asy
         res.sendStatus(400);
     }
 });
-exports.router.post('/revoke', ((req, res, next) => {
+exports.router.post('/revoke', (async (req, res, next) => {
     const token = req.cookies[Auth_1.TOKEN_COOKIE];
     if (!token)
         return res.status(400).send('No cookie provided!');
     res.clearCookie(Auth_1.TOKEN_COOKIE);
+    try {
+        const uToken = jwt.verify(token, constanst_1.JWTKEY);
+        let userdb;
+        if (uToken.identifier.match("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})"))
+            userdb = await User_1.User.findOne({ CPF: uToken.identifier });
+        else
+            userdb = await User_1.User.findOne({ email: uToken.identifier });
+        await API_1.clientApi.authorize(userdb.email, 0);
+    }
+    catch (e) {
+    }
 }));
 function validateIdentifier(body) {
     return joi.validate(body, joi.object().keys({

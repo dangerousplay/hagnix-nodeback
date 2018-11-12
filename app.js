@@ -69,4 +69,3 @@ async function teste() {
     const auth = await API_1.clientApi.authorize('davificanhahenrique@hotmail.com', 60 * 60 * 1000);
     winston_1.info(`Authorize returned: ${auth}`);
 }
-teste();

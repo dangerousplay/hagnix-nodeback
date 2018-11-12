@@ -75,6 +75,4 @@ async function teste() : Promise<void> {
 
 }
 
-teste();
-
 
