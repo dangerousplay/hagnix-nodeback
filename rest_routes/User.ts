@@ -19,6 +19,15 @@ export function route(route: String, app: Express.Application) {
         resource.before(p, authAdmin)
     });
 
+    resource.after('get', (req:any, res:any, next:any) => {
+
+        console.log(res.locals.bundle);
+
+        res.locals.bundle = res.locals.bundle.map((e:any) => { e.password = ""; return e});
+
+        next();
+    });
+
     resource.after('delete', async (req:any, res:any, next:any) : Promise<void> => {
        const request = await clientApi.deletePlayer(req.params.id);
 
@@ -55,7 +64,6 @@ export function route(route: String, app: Express.Application) {
         }
 
         user.password = req.body.new;
-        // @ts-ignore
         user.save();
     });
 

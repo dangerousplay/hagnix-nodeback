@@ -80,7 +80,4 @@ exports.userSchema = new mongoose_1.Schema({
         set: (v) => { return bcrypt.hashSync(v, bcrypt.genSaltSync(salt)); }
     }
 });
-// userSchema.methods.getToken = function() : String {
-//     return '';
-// };
 exports.User = mongoose_1.model('User', exports.userSchema);

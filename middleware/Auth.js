@@ -82,7 +82,7 @@ class AuthBuilder {
         //@ts-ignore
         return async function (req, res, next) {
             const userdb = await auth(req, res, next);
-            if (!userdb)
+            if (!(userdb && userdb.id))
                 return;
             if (__roles.length > 0) {
                 const roles = userdb.roles;

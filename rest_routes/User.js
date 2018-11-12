@@ -23,6 +23,11 @@ function route(route, app) {
         .forEach((p) => {
         resource.before(p, authAdmin);
     });
+    resource.after('get', (req, res, next) => {
+        console.log(res.locals.bundle);
+        res.locals.bundle = res.locals.bundle.map((e) => { e.password = ""; return e; });
+        next();
+    });
     resource.after('delete', async (req, res, next) => {
         const request = await API_1.clientApi.deletePlayer(req.params.id);
         res.sendStatus(request);
@@ -51,7 +56,6 @@ function route(route, app) {
             return;
         }
         user.password = req.body.new;
-        // @ts-ignore
         user.save();
     });
     // restful.enableCors(resource);

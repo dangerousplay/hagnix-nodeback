@@ -93,7 +93,7 @@ export class AuthBuilder {
         return async function (req, res, next) : Promise<UserSchema | void> {
             const userdb: UserSchema = await auth(req, res, next) as UserSchema;
 
-            if (!userdb) return;
+            if (!(userdb && userdb.id)) return;
 
             if (__roles.length > 0) {
                 const roles = (userdb.roles as Array<String>);

@@ -115,9 +115,5 @@ export const userSchema:Schema = new Schema({
     }
 });
 
-// userSchema.methods.getToken = function() : String {
-//     return '';
-// };
-
 export const User = model('User', userSchema);
 

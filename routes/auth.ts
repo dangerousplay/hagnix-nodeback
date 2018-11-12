@@ -1,7 +1,6 @@
 import {Router} from "express";
 import {User, UserSchema, UserToken} from "../models/User";
 import {TOKEN_COOKIE} from "../middleware/Auth";
-import {error} from "../init/Logger";
 import * as jwt from "jsonwebtoken";
 import {JWTTokenExpiration, JWTKEY, JWTRTokenExpiration, EmailREGEX} from "../config/constanst";
 import * as bcrypt from 'bcrypt';
@@ -16,11 +15,13 @@ router.post('/', validateBody(validationResult), async (req, res, next) => {
 
     // language=RegExp
     if ((req.body.identifier as String).match("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})"))
-        userdb = await User.findOne({CPF: req.body.identifier}).select({password: 1, admin: 1, roles: 1});
+    //@ts-ignore
+        userdb = await User.findOne({CPF: req.body.identifier});
     else
-        userdb = await User.findOne({email: req.body.identifier}).select({password: 1, admin: 1, roles: 1});
+    //@ts-ignore
+        userdb = await User.findOne({email: req.body.identifier});
 
-    if (!userdb) return res.status(400).send('Bad credentials!');
+    if (!userdb) return res.status(400).send('Bad credentials!');;
 
     const epoch = Math.round(new Date().getTime() / 1000);
     //@ts-ignore
@@ -69,24 +70,26 @@ router.post('/', validateBody(validationResult), async (req, res, next) => {
         },
         JWTKEY,
         {expiresIn: JWTTokenExpiration});
+    res.cookie(TOKEN_COOKIE, jrToken, {secure: false, httpOnly: true});
 
-    res.cookie(TOKEN_COOKIE, jrToken);
-    res.send({token: jToken});
+    delete userdb.password;
+
+    res.send({token: jToken, user: userdb});
 });
 
-router.get('/token', async (req, res, next) : Promise<any> => {
+router.post('/token', validateBody(validateIdentifier), async (req, res, next) : Promise<any> => {
     const token = req.cookies[TOKEN_COOKIE];
 
     try {
         const user: UserToken = jwt.verify(token, JWTKEY) as UserToken;
 
-        let userdb;
+        let userdb: UserSchema;
 
         // language=RegExp
         if ((req.body.identifier as String).match("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})"))
-            userdb = await User.findOne({CPF: req.body.identifier}).select({password: 1, admin: 1, roles: 1});
+            userdb = await User.findOne({CPF: req.body.identifier});
         else
-            userdb = await User.findOne({email: req.body.identifier}).select({password: 1, admin: 1, roles: 1});
+            userdb = await User.findOne({email: req.body.identifier});
 
         if (!userdb) {
             return res.clearCookie(TOKEN_COOKIE).status(400).send('Invalid Token');
@@ -96,22 +99,29 @@ router.get('/token', async (req, res, next) : Promise<any> => {
         //@ts-ignore
         user.exp = new Date().getTime() + JWTTokenExpiration;
 
-        res.send({token: jwt.sign(user, JWTKEY)});
+        delete userdb.password;
+
+        res.send({token: jwt.sign(user, JWTKEY), user: userdb});
     } catch (e) {
-        error(e);
         res.sendStatus(400);
     }
 
 });
 
 
-router.get('/revoke', ((req, res, next) => {
+router.post('/revoke', ((req, res, next) => {
     const token = req.cookies[TOKEN_COOKIE];
 
     if(!token) return res.status(400).send('No cookie provided!');
 
     res.clearCookie(TOKEN_COOKIE);
 }));
+
+function validateIdentifier(body: any){
+    return joi.validate(body, joi.object().keys({
+        identifier: joi.string().regex(new RegExp("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})|" + EmailREGEX)),
+    }));
+}
 
 function validationResult(body: any) : ValidationResult<any>{
     return joi.validate(body, joi.object().keys({
