@@ -16,7 +16,9 @@ const bcrypt = __importStar(require("bcrypt"));
 const joi = __importStar(require("joi"));
 const Validation_1 = require("../middleware/Validation");
 const API_1 = require("../game/API");
+const Logger_1 = require("../init/Logger");
 exports.router = express_1.Router();
+const debug = process.env.DEBUG;
 exports.router.post('/', Validation_1.validateBody(validationResult), async (req, res, next) => {
     let userdb;
     // language=RegExp
@@ -69,9 +71,13 @@ exports.router.post('/', Validation_1.validateBody(validationResult), async (req
         refreshToken: false
     }, constanst_1.JWTKEY, { expiresIn: constanst_1.JWTTokenExpiration });
     res.cookie(Auth_1.TOKEN_COOKIE, jrToken, { secure: false, httpOnly: true });
-    userdb.password = "";
-    res.send({ token: jToken, user: userdb });
-    await API_1.clientApi.authorize(userdb.email, constanst_1.JWTRTokenExpiration);
+    const userCopy = JSON.parse(JSON.stringify(userdb));
+    userCopy.password = "";
+    res.send({ token: jToken, user: userCopy });
+    const response = await API_1.clientApi.authorize(userdb.email, constanst_1.JWTRTokenExpiration);
+    if (debug) {
+        Logger_1.info(`Authorized user: ${userdb}, server response: ${response}`);
+    }
 });
 exports.router.post('/token', Validation_1.validateBody(validateIdentifier), async (req, res, next) => {
     const token = req.cookies[Auth_1.TOKEN_COOKIE];

@@ -7,7 +7,7 @@ import {JWTKEY, RequestChannel, ResponseChannel} from "../config/constanst";
 import * as redis from 'redis';
 import * as uuid from 'uuid';
 import {EventEmitter} from "events";
-import {ClientOpts, RedisClient} from "redis";
+import {ClientOpts, RedisClient, RetryStrategy} from "redis";
 
 
 const host = process.env.REDIS_HOST;
@@ -47,8 +47,8 @@ function startRedis(){
     //@ts-ignore
     let connection:ClientOpts = null;
 
-    if(host && password && port)
-       connection = {host, port: parseInt(port), password};
+    if(host || password || port)
+       connection = {host, port: parseInt(port), password: password && password.length > 0 ? password : undefined};
 
     try {
         info(`Connecting on redis: ${connection != null ? JSON.stringify({host, port}):'localhost'}`);

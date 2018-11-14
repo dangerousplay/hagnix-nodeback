@@ -40,8 +40,8 @@ var Command;
 function startRedis() {
     //@ts-ignore
     let connection = null;
-    if (host && password && port)
-        connection = { host, port: parseInt(port), password };
+    if (host || password || port)
+        connection = { host, port: parseInt(port), password: password && password.length > 0 ? password : undefined };
     try {
         winston_1.info(`Connecting on redis: ${connection != null ? JSON.stringify({ host, port }) : 'localhost'}`);
         if (connection) {

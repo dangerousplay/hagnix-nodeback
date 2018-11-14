@@ -8,8 +8,11 @@ import * as joi from 'joi';
 import {ValidationResult} from "joi";
 import {validateBody} from "../middleware/Validation";
 import {clientApi} from "../game/API";
+import {info} from "../init/Logger";
 
 export const router: Router = Router();
+
+const debug = process.env.DEBUG;
 
 router.post('/', validateBody(validationResult), async (req, res, next) => {
     let userdb: UserSchema;
@@ -73,10 +76,17 @@ router.post('/', validateBody(validationResult), async (req, res, next) => {
         {expiresIn: JWTTokenExpiration});
     res.cookie(TOKEN_COOKIE, jrToken, {secure: false, httpOnly: true});
 
-    userdb.password = "";
+    const userCopy = JSON.parse(JSON.stringify(userdb));
 
-    res.send({token: jToken, user: userdb});
-    await clientApi.authorize(userdb.email, JWTRTokenExpiration);
+    userCopy.password = "";
+
+    res.send({token: jToken, user: userCopy});
+
+    const response = await clientApi.authorize(userdb.email, JWTRTokenExpiration);
+
+    if(debug){
+        info(`Authorized user: ${userdb}, server response: ${response}`)
+    }
 });
 
 router.post('/token', validateBody(validateIdentifier), async (req, res, next) : Promise<any> => {
