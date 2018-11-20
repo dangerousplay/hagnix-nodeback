@@ -54,6 +54,12 @@ export function route(route: String, app: Express.Application) {
         next();
     });
 
+    resource.after('put', async (req:any, res:any, next:any) : Promise<void> => {
+       const player: UserSchema = req.body;
+       if(player.banned)
+       await clientApi.banPlayer(player.email);
+    });
+
     //@ts-ignore
     resource.route('changepw', async (req, res, next) : Promise<void> => {
         const user:UserSchema = await authLogged(req, res, next);

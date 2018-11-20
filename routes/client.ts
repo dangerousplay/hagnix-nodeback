@@ -26,7 +26,8 @@ router.post('/kick', authAdmin, validateBody(validator), async (req, res, next) 
 router.get('/:email', auth, validateParams(validator), async (req, res, next) : Promise<any> => {
     const player = await clientApi.getPlayer(req.params.email);
 
-    if(!player) return res.status(404).send([]);
+    if(!player) return res.status(200).send([]);
+    res.send(player);
 });
 
 router.post('/ban', authAdmin, validateBody(validator), async (req, res, next) : Promise<any> => {
@@ -65,7 +66,7 @@ router.get('/logged/:email', auth, validateParams(validator), async (req, res, n
     if(result == 200){
         res.send(result);
     } else {
-        res.status(404).send({message: 'Player not online.'});
+        res.status(200).send({message: 'Player not online.'});
     }
 });
 

@@ -30,7 +30,8 @@ exports.router.post('/kick', authAdmin, Validation_1.validateBody(validator), as
 exports.router.get('/:email', Auth_1.auth, Validation_1.validateParams(validator), async (req, res, next) => {
     const player = await API_1.clientApi.getPlayer(req.params.email);
     if (!player)
-        return res.status(404).send([]);
+        return res.status(200).send([]);
+    res.send(player);
 });
 exports.router.post('/ban', authAdmin, Validation_1.validateBody(validator), async (req, res, next) => {
     const result = await API_1.clientApi.banPlayer(req.body.email);
@@ -65,7 +66,7 @@ exports.router.get('/logged/:email', Auth_1.auth, Validation_1.validateParams(va
         res.send(result);
     }
     else {
-        res.status(404).send({ message: 'Player not online.' });
+        res.status(200).send({ message: 'Player not online.' });
     }
 });
 function validator(body) {

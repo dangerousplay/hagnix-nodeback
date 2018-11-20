@@ -48,6 +48,11 @@ function route(route, app) {
         await API_1.clientApi.createPlayer(player.email, player.password, playerDB._id);
         next();
     });
+    resource.after('put', async (req, res, next) => {
+        const player = req.body;
+        if (player.banned)
+            await API_1.clientApi.banPlayer(player.email);
+    });
     //@ts-ignore
     resource.route('changepw', async (req, res, next) => {
         const user = await authLogged(req, res, next);

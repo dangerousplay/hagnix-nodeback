@@ -30,7 +30,6 @@ exports.router.post('/', Validation_1.validateBody(validationResult), async (req
         userdb = await User_1.User.findOne({ email: req.body.identifier });
     if (!userdb)
         return res.status(400).send('Bad credentials!');
-    ;
     const epoch = Math.round(new Date().getTime() / 1000);
     //@ts-ignore
     const userAttempt = Math.round(userdb.login.lastAttempt.getTime() / 1000);
@@ -61,6 +60,8 @@ exports.router.post('/', Validation_1.validateBody(validationResult), async (req
         identifier: req.body.identifier,
         admin: userdb.admin,
         roles: userdb.roles,
+        email: userdb.email,
+        name: userdb.name,
         refreshToken: true
     };
     const jrToken = jwt.sign(refreshToken, constanst_1.JWTKEY, { expiresIn: constanst_1.JWTRTokenExpiration });
@@ -68,12 +69,12 @@ exports.router.post('/', Validation_1.validateBody(validationResult), async (req
         identifier: req.body.identifier,
         admin: userdb.admin,
         roles: userdb.roles,
+        email: userdb.email,
+        name: userdb.name,
         refreshToken: false
     }, constanst_1.JWTKEY, { expiresIn: constanst_1.JWTTokenExpiration });
     res.cookie(Auth_1.TOKEN_COOKIE, jrToken, { secure: false, httpOnly: true });
-    const userCopy = JSON.parse(JSON.stringify(userdb));
-    userCopy.password = "";
-    res.send({ token: jToken, user: userCopy });
+    res.send({ token: jToken });
     const response = await API_1.clientApi.authorize(userdb.email, constanst_1.JWTRTokenExpiration);
     if (debug) {
         Logger_1.info(`Authorized user: ${userdb}, server response: ${response}`);
@@ -96,7 +97,7 @@ exports.router.post('/token', Validation_1.validateBody(validateIdentifier), asy
         //@ts-ignore
         user.exp = new Date().getTime() + constanst_1.JWTTokenExpiration;
         delete userdb.password;
-        res.send({ token: jwt.sign(user, constanst_1.JWTKEY), user: userdb });
+        res.send({ token: jwt.sign(user, constanst_1.JWTKEY) });
     }
     catch (e) {
         res.sendStatus(400);
@@ -109,14 +110,21 @@ exports.router.post('/revoke', (async (req, res, next) => {
     res.clearCookie(Auth_1.TOKEN_COOKIE);
     try {
         const uToken = jwt.verify(token, constanst_1.JWTKEY);
-        let userdb;
-        if (uToken.identifier.match("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})"))
-            userdb = await User_1.User.findOne({ CPF: uToken.identifier });
-        else
-            userdb = await User_1.User.findOne({ email: uToken.identifier });
-        await API_1.clientApi.authorize(userdb.email, 0);
+        await API_1.clientApi.authorize(uToken.email, 0);
     }
     catch (e) {
+    }
+}));
+exports.router.get('/logged', (async (req, res, next) => {
+    const token = req.cookies[Auth_1.TOKEN_COOKIE];
+    if (!token)
+        return res.send({ logged: false });
+    try {
+        jwt.verify(token, constanst_1.JWTKEY);
+        res.send({ logged: true });
+    }
+    catch (e) {
+        return res.send({ logged: false });
     }
 }));
 function validateIdentifier(body) {

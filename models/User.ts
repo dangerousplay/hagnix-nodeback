@@ -9,9 +9,11 @@ const config = require('config');
 const salt = config.get('bcrypt-number');
 
 export interface UserToken {
+    email: String,
     identifier: String,
     refreshToken: boolean
     admin: boolean,
+    name: String,
     roles: Array<Roles>
 }
 
@@ -32,6 +34,11 @@ export interface UserSchema extends Document {
         lastAttempt: Date,
         attempts: number,
         locked: boolean
+    },
+    banned: {
+        status: boolean,
+        desban: Date,
+        reason: String
     }
 
 }
@@ -112,6 +119,15 @@ export const userSchema:Schema = new Schema({
         minlength: 8,
         required: true,
         set: (v:String) => {return bcrypt.hashSync(v, bcrypt.genSaltSync(salt))}
+    },
+
+    banned: {
+        type: {
+            status: Boolean,
+            desban: Date,
+            reason: String
+        },
+        required: false
     }
 });
 
