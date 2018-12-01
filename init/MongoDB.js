@@ -18,8 +18,6 @@ const port = process.env.MONGO_PORT;
 const database = process.env.MONGO_DATABASE;
 const host = (pHost != null ?
     "mongodb://" +
-        (user != null ? user : "") +
-        (password != null ? ":" + password + "@" : "") +
         (pHost) +
         (port != null ? ":" + port + "/" : ":27017/") +
         (database != null ? database : "")
@@ -29,7 +27,10 @@ const host = (pHost != null ?
 logger.info(`MongoDB connection string: ${host}`);
 async function init() {
     try {
-        await mongoose.connect(host);
+        if (user && password)
+            await mongoose.connect(host, { useNewUrlParser: true, pass: password, user: user, autoReconnect: true });
+        else
+            await mongoose.connect(host);
         logger.info(`Connected on MongoDB at host: ${host}`);
     }
     catch (e) {

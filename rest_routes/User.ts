@@ -1,14 +1,10 @@
-import {UserSchema, userSchema} from "../models/User";
-import {NextFunction} from "express";
-import {auth} from "../middleware/Auth";
-import {info} from "winston";
+import {User, UserSchema, userSchema} from "../models/User";
 import {AuthBuilder} from "../middleware/Auth";
 import {validateBody} from "../middleware/Validation";
 import * as Joi from "joi";
-import {User} from "../models/User";
+import {clientApi} from "../game/API";
 
 const restful = require('node-restful');
-const cors = require('cors');
 const methods = ['get', 'post', 'put', 'delete'];
 
 const authAdmin = new AuthBuilder().setAdminOnly(true).build();
@@ -23,6 +19,47 @@ export function route(route: String, app: Express.Application) {
         resource.before(p, authAdmin)
     });
 
+    resource.after('get', (req:any, res:any, next:any) => {
+
+        console.log(res.locals.bundle);
+
+        res.locals.bundle = res.locals.bundle.map((e:any) => { e.password = ""; return e});
+
+        next();
+    });
+
+    resource.after('delete', async (req:any, res:any, next:any) : Promise<void> => {
+       const request = await clientApi.deletePlayer(req.params.id);
+
+       res.sendStatus(request);
+        next();
+    });
+
+    resource.before('post', async (req:any, res:any, next:any) : Promise<void> => {
+       const player = await clientApi.getPlayer(req.body.email);
+
+        if(!player){
+          next()
+        } else {
+            res.status(400).send('email already in use');
+        }
+    });
+
+    resource.after('post', async (req:any, res:any, next:any) : Promise<void> => {
+        const player: UserSchema = req.body;
+        const playerDB = await User.findOne({email: player.email}).select({_id: 1});
+
+        await clientApi.createPlayer(player.email, player.password, playerDB._id);
+
+        next();
+    });
+
+    resource.after('put', async (req:any, res:any, next:any) : Promise<void> => {
+       const player: UserSchema = req.body;
+       if(player.banned)
+       await clientApi.banPlayer(player.email);
+    });
+
     //@ts-ignore
     resource.route('changepw', async (req, res, next) : Promise<void> => {
         const user:UserSchema = await authLogged(req, res, next);
@@ -33,7 +70,6 @@ export function route(route: String, app: Express.Application) {
         }
 
         user.password = req.body.new;
-        // @ts-ignore
         user.save();
     });
 

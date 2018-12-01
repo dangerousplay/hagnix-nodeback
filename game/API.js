@@ -22,11 +22,26 @@ const queue = [];
 const event = new events_1.EventEmitter();
 let sender;
 let listener;
+startRedis();
+var Command;
+(function (Command) {
+    Command["KICK"] = "KICK";
+    Command["LIST"] = "LIST";
+    Command["GET_PLAYER"] = "GETPLAYER";
+    Command["BAN"] = "BAN";
+    Command["PARDON"] = "PARDON";
+    Command["LOGGED"] = "LOGGED";
+    Command["AUTHORIZE"] = "AUTHORIZE";
+    Command["CREATE_PLAYER"] = "CREATE_PLAYER";
+    Command["DELETE_PLAYER"] = "DELETE_PLAYER";
+    Command["CHANGE_PLAYER"] = "CHANGE_PLAYER";
+    Command["SERVER_INFO"] = "SERVER_INFO";
+})(Command || (Command = {}));
 function startRedis() {
     //@ts-ignore
     let connection = null;
-    if (host && password && port)
-        connection = { host, port: parseInt(port), password };
+    if (host || password || port)
+        connection = { host, port: parseInt(port), password: password && password.length > 0 ? password : undefined };
     try {
         winston_1.info(`Connecting on redis: ${connection != null ? JSON.stringify({ host, port }) : 'localhost'}`);
         if (connection) {
@@ -44,17 +59,6 @@ function startRedis() {
         setTimeout(() => startRedis(), 1000);
     }
 }
-startRedis();
-var Command;
-(function (Command) {
-    Command["KICK"] = "KICK";
-    Command["LIST"] = "LIST";
-    Command["GET_PLAYER"] = "GETPLAYER";
-    Command["BAN"] = "BAN";
-    Command["PARDON"] = "PARDON";
-    Command["LOGGED"] = "LOGGED";
-    Command["AUTHORIZE"] = "AUTHORIZE";
-})(Command || (Command = {}));
 const clientAPIDESC = {
     authorize: "POST api/client/auth",
     banPlayer: "POST api/client/ban",
@@ -91,6 +95,18 @@ class ClientImplementation {
     async pardonPlayer(email) {
         const response = await createRequest(Command.PARDON, [{ email }]);
         return response.status;
+    }
+    async createPlayer(email, password, objectId) {
+        return (await createRequest(Command.CREATE_PLAYER, [{ email, password, object_id: objectId }])).status;
+    }
+    async changePlayer(player) {
+        return (await createRequest(Command.CHANGE_PLAYER, [player])).status;
+    }
+    async deletePlayer(id) {
+        return (await createRequest(Command.DELETE_PLAYER, [id])).status;
+    }
+    async serverInfo() {
+        return await createRequest(Command.SERVER_INFO, []);
     }
 }
 function generateToken() {

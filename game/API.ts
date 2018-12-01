@@ -7,7 +7,21 @@ import {JWTKEY, RequestChannel, ResponseChannel} from "../config/constanst";
 import * as redis from 'redis';
 import * as uuid from 'uuid';
 import {EventEmitter} from "events";
-import {ClientOpts, RedisClient} from "redis";
+import {ClientOpts, RedisClient, RetryStrategy} from "redis";
+
+
+const host = process.env.REDIS_HOST;
+const password = process.env.REDIS_PASSWORD;
+const port = process.env.REDIS_PORT;
+
+const queue: Array<RID | undefined> = [];
+
+const event = new EventEmitter();
+
+let sender: RedisClient;
+let listener: RedisClient;
+
+startRedis();
 
 interface RID {
     id: String,
@@ -15,23 +29,26 @@ interface RID {
     timer: any
 }
 
-const host = process.env.REDIS_HOST;
-const password = process.env.REDIS_PASSWORD;
-const port = process.env.REDIS_PORT;
-
-const queue:Array<RID | undefined> = [];
-
-const event = new EventEmitter();
-
-let sender: RedisClient;
-let listener: RedisClient;
+enum Command {
+    KICK = 'KICK',
+    LIST = 'LIST',
+    GET_PLAYER = 'GETPLAYER',
+    BAN = 'BAN',
+    PARDON = 'PARDON',
+    LOGGED = 'LOGGED',
+    AUTHORIZE = 'AUTHORIZE',
+    CREATE_PLAYER = 'CREATE_PLAYER',
+    DELETE_PLAYER = 'DELETE_PLAYER',
+    CHANGE_PLAYER = 'CHANGE_PLAYER',
+    SERVER_INFO = 'SERVER_INFO'
+}
 
 function startRedis(){
     //@ts-ignore
     let connection:ClientOpts = null;
 
-    if(host && password && port)
-       connection = {host,port: parseInt(port),password};
+    if(host || password || port)
+       connection = {host, port: parseInt(port), password: password && password.length > 0 ? password : undefined};
 
     try {
         info(`Connecting on redis: ${connection != null ? JSON.stringify({host, port}):'localhost'}`);
@@ -51,19 +68,6 @@ function startRedis(){
     }
 }
 
-startRedis();
-
-enum Command {
-    KICK = 'KICK',
-    LIST = 'LIST',
-    GET_PLAYER = 'GETPLAYER',
-    BAN = 'BAN',
-    PARDON = 'PARDON',
-    LOGGED = 'LOGGED',
-    AUTHORIZE = 'AUTHORIZE'
-}
-
-
 export interface ClientAPI {
 
     isLogged(email: String): Promise<Number>;
@@ -79,11 +83,30 @@ export interface ClientAPI {
     getOnlinePlayers(): Promise<Array<Player>>;
 
     pardonPlayer(email: String): Promise<Number>;
+
+    createPlayer(email: String, password: String, objectId: String) : Promise<Number>;
+
+    deletePlayer(emailOrId: String) : Promise<Number>;
+
+    changePlayer(player: Player) : Promise<Number>;
+
+    serverInfo(): Promise<Server>;
+}
+
+export interface Server {
+    name: String,
+    players: number,
+    capacity: number
 }
 
 export interface Player {
     email: String,
-    username: String
+    name: String,
+    admin: boolean,
+    token: number,
+    gold: number,
+    password: String,
+    banned: boolean
 }
 
 interface Request<T> {
@@ -145,6 +168,22 @@ class ClientImplementation implements ClientAPI {
     async pardonPlayer(email: String): Promise<Number> {
         const response:Response<String> = await createRequest(Command.PARDON, [{email}]);
         return response.status;
+    }
+
+    async createPlayer(email: String, password: String, objectId: String): Promise<Number> {
+        return (await createRequest(Command.CREATE_PLAYER, [{email, password, object_id: objectId}])).status;
+    }
+
+    async changePlayer(player: Player): Promise<Number> {
+        return (await createRequest(Command.CHANGE_PLAYER, [player])).status
+    }
+
+    async deletePlayer(id: String): Promise<Number> {
+        return (await createRequest(Command.DELETE_PLAYER, [id])).status;
+    }
+
+    async serverInfo(): Promise<Server> {
+        return await createRequest(Command.SERVER_INFO, []);
     }
 
 }

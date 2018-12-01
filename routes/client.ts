@@ -17,16 +17,17 @@ router.post('/kick', authAdmin, validateBody(validator), async (req, res, next) 
     const result = await clientApi.kickPlayer(req.body.player,req.body.reason);
 
     if(result == 200){
-        res.send('Player kicked sucessfully.');
+        res.send({message: 'Player kicked sucessfully.'});
     } else {
-        res.status(500).send('Player not kicked.');
+        res.status(500).send({message: 'Player not kicked.'});
     }
 });
 
 router.get('/:email', auth, validateParams(validator), async (req, res, next) : Promise<any> => {
     const player = await clientApi.getPlayer(req.params.email);
 
-    if(!player) return res.status(404).send([]);
+    if(!player) return res.status(200).send([]);
+    res.send(player);
 });
 
 router.post('/ban', authAdmin, validateBody(validator), async (req, res, next) : Promise<any> => {
@@ -35,7 +36,7 @@ router.post('/ban', authAdmin, validateBody(validator), async (req, res, next) :
     if(result == 200){
         res.send('Player banned sucessfully.');
     } else {
-        res.status(500).send('Player not banned.');
+        res.status(500).send({message: 'Player not banned.'});
     }
 });
 
@@ -45,17 +46,17 @@ router.post('/pardon',  authAdmin, validateBody(validator), async (req, res, nex
     if(result == 200){
         res.send('Player pardoned sucessfully.');
     } else {
-        res.status(500).send('Player not pardoned.');
+        res.status(500).send({message: 'Player not pardoned.'});
     }
 });
 
-router.post('/authorize', auth, validateBody(validator), async (req, res, next) : Promise<any> => {
+router.post('/authorize', authAdmin, validateBody(validator), async (req, res, next) : Promise<any> => {
    const result = await clientApi.authorize(req.body.email, JWTTokenExpiration);
 
     if(result == 200){
-        res.send('Player authorized sucessfully.');
+        res.send({message: 'Player authorized sucessfully.'});
     } else {
-        res.status(500).send('Player not authorized.');
+        res.status(500).send({message: 'Player not authorized.'});
     }
 });
 
@@ -63,9 +64,9 @@ router.get('/logged/:email', auth, validateParams(validator), async (req, res, n
    const result = await clientApi.isLogged(req.params.email);
 
     if(result == 200){
-        res.send('Player online.');
+        res.send(result);
     } else {
-        res.status(404).send('Player not online.');
+        res.status(200).send({message: 'Player not online.'});
     }
 });
 

@@ -51,6 +51,10 @@ exports.userSchema = new mongoose_1.Schema({
         required: true,
         match: /\d/
     },
+    complement: {
+        type: String,
+        required: false
+    },
     roles: {
         type: [String],
         //@ts-ignore
@@ -74,9 +78,14 @@ exports.userSchema = new mongoose_1.Schema({
         minlength: 8,
         required: true,
         set: (v) => { return bcrypt.hashSync(v, bcrypt.genSaltSync(salt)); }
+    },
+    banned: {
+        type: {
+            status: Boolean,
+            desban: Date,
+            reason: String
+        },
+        required: false
     }
 });
-// userSchema.methods.getToken = function() : String {
-//     return '';
-// };
 exports.User = mongoose_1.model('User', exports.userSchema);

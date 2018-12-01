@@ -21,16 +21,17 @@ exports.router.get('/', Auth_1.auth, (req, res, next) => {
 exports.router.post('/kick', authAdmin, Validation_1.validateBody(validator), async (req, res, next) => {
     const result = await API_1.clientApi.kickPlayer(req.body.player, req.body.reason);
     if (result == 200) {
-        res.send('Player kicked sucessfully.');
+        res.send({ message: 'Player kicked sucessfully.' });
     }
     else {
-        res.status(500).send('Player not kicked.');
+        res.status(500).send({ message: 'Player not kicked.' });
     }
 });
 exports.router.get('/:email', Auth_1.auth, Validation_1.validateParams(validator), async (req, res, next) => {
     const player = await API_1.clientApi.getPlayer(req.params.email);
     if (!player)
-        return res.status(404).send([]);
+        return res.status(200).send([]);
+    res.send(player);
 });
 exports.router.post('/ban', authAdmin, Validation_1.validateBody(validator), async (req, res, next) => {
     const result = await API_1.clientApi.banPlayer(req.body.email);
@@ -38,7 +39,7 @@ exports.router.post('/ban', authAdmin, Validation_1.validateBody(validator), asy
         res.send('Player banned sucessfully.');
     }
     else {
-        res.status(500).send('Player not banned.');
+        res.status(500).send({ message: 'Player not banned.' });
     }
 });
 exports.router.post('/pardon', authAdmin, Validation_1.validateBody(validator), async (req, res, next) => {
@@ -47,25 +48,25 @@ exports.router.post('/pardon', authAdmin, Validation_1.validateBody(validator), 
         res.send('Player pardoned sucessfully.');
     }
     else {
-        res.status(500).send('Player not pardoned.');
+        res.status(500).send({ message: 'Player not pardoned.' });
     }
 });
-exports.router.post('/authorize', Auth_1.auth, Validation_1.validateBody(validator), async (req, res, next) => {
+exports.router.post('/authorize', authAdmin, Validation_1.validateBody(validator), async (req, res, next) => {
     const result = await API_1.clientApi.authorize(req.body.email, constanst_1.JWTTokenExpiration);
     if (result == 200) {
-        res.send('Player authorized sucessfully.');
+        res.send({ message: 'Player authorized sucessfully.' });
     }
     else {
-        res.status(500).send('Player not authorized.');
+        res.status(500).send({ message: 'Player not authorized.' });
     }
 });
 exports.router.get('/logged/:email', Auth_1.auth, Validation_1.validateParams(validator), async (req, res, next) => {
     const result = await API_1.clientApi.isLogged(req.params.email);
     if (result == 200) {
-        res.send('Player online.');
+        res.send(result);
     }
     else {
-        res.status(404).send('Player not online.');
+        res.status(200).send({ message: 'Player not online.' });
     }
 });
 function validator(body) {

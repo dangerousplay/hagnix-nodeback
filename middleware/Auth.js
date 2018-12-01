@@ -12,7 +12,7 @@ const User_1 = require("../models/User");
 const constanst_1 = require("../config/constanst");
 exports.TOKEN_COOKIE = 'token';
 exports.AUTH_HEADER = 'authorization';
-async function auth(req, res, next) {
+async function auth(req, res, next, callNext = true) {
     const cjwt = req.headers[exports.AUTH_HEADER];
     if (!cjwt) {
         res.sendStatus(401);
@@ -30,7 +30,8 @@ async function auth(req, res, next) {
             userdb = await User_1.User.findOne({ email: user.identifier }).select({ password: 1, roles: 1, admin: 1 });
         if (!userdb)
             return res.status(400).send('Invalid token!');
-        next();
+        if (callNext)
+            next();
         //@ts-ignore
         return userdb;
     }
@@ -81,7 +82,7 @@ class AuthBuilder {
         //@ts-ignore
         return async function (req, res, next) {
             const userdb = await auth(req, res, next);
-            if (!userdb)
+            if (!(userdb && userdb.id))
                 return;
             if (__roles.length > 0) {
                 const roles = userdb.roles;

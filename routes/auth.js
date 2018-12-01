@@ -10,110 +10,128 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const User_1 = require("../models/User");
 const Auth_1 = require("../middleware/Auth");
-const Logger_1 = require("../init/Logger");
 const jwt = __importStar(require("jsonwebtoken"));
 const constanst_1 = require("../config/constanst");
 const bcrypt = __importStar(require("bcrypt"));
 const joi = __importStar(require("joi"));
 const Validation_1 = require("../middleware/Validation");
+const API_1 = require("../game/API");
+const Logger_1 = require("../init/Logger");
 exports.router = express_1.Router();
-// language=RegExp
-const identifier = /([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})/;
+const debug = process.env.DEBUG;
 exports.router.post('/', Validation_1.validateBody(validationResult), async (req, res, next) => {
     let userdb;
     // language=RegExp
     if (req.body.identifier.match("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})"))
-        userdb = await User_1.User.findOne({ CPF: req.body.identifier }).select({ password: 1, admin: 1, roles: 1 });
+        //@ts-ignore
+        userdb = await User_1.User.findOne({ CPF: req.body.identifier });
     else
-        userdb = await User_1.User.findOne({ email: req.body.identifier }).select({ password: 1, admin: 1, roles: 1 });
+        //@ts-ignore
+        userdb = await User_1.User.findOne({ email: req.body.identifier });
     if (!userdb)
         return res.status(400).send('Bad credentials!');
     const epoch = Math.round(new Date().getTime() / 1000);
     //@ts-ignore
     const userAttempt = Math.round(userdb.login.lastAttempt.getTime() / 1000);
-    //@ts-ignore
     if (userdb.login.locked) {
         if ((epoch - userAttempt) < 3600) {
             return res.status(403).send({
                 message: `Your account is locked due to a multiple wrong password attempts.`,
-                //@ts-ignore
                 lastAttempt: userdb.login.lastAttempt
             });
         }
         else {
-            //@ts-ignore
             userdb.login.attempts = 0;
         }
     }
-    //@ts-ignore
     const equal = bcrypt.compareSync(req.body.password, userdb.password);
     if (!equal) {
-        //@ts-ignore
         userdb.login.attempts++;
-        //@ts-ignore
         userdb.login.lastAttempt = new Date();
-        //@ts-ignore
         if (userdb.login.attempts > 5)
             userdb.login.locked = true;
         userdb.save();
         return res.status(400).send('Bad credentials!');
     }
-    //@ts-ignore
     userdb.login.attempts = 0;
-    //@ts-ignore
     userdb.login.lastAttempt = new Date();
-    //@ts-ignore
     userdb.login.locked = false;
     const refreshToken = {
         identifier: req.body.identifier,
-        //@ts-ignore
         admin: userdb.admin,
-        //@ts-ignore
         roles: userdb.roles,
+        email: userdb.email,
+        name: userdb.name,
         refreshToken: true
     };
     const jrToken = jwt.sign(refreshToken, constanst_1.JWTKEY, { expiresIn: constanst_1.JWTRTokenExpiration });
     const jToken = jwt.sign({
         identifier: req.body.identifier,
-        //@ts-ignore
         admin: userdb.admin,
-        //@ts-ignore
         roles: userdb.roles,
+        email: userdb.email,
+        name: userdb.name,
         refreshToken: false
     }, constanst_1.JWTKEY, { expiresIn: constanst_1.JWTTokenExpiration });
-    res.cookie(Auth_1.TOKEN_COOKIE, jrToken);
+    res.cookie(Auth_1.TOKEN_COOKIE, jrToken, { secure: false, httpOnly: true });
     res.send({ token: jToken });
+    const response = await API_1.clientApi.authorize(userdb.email, constanst_1.JWTRTokenExpiration);
+    if (debug) {
+        Logger_1.info(`Authorized user: ${userdb}, server response: ${response}`);
+    }
 });
-//@ts-ignore
-exports.router.get('/token', async (req, res, next) => {
+exports.router.post('/token', Validation_1.validateBody(validateIdentifier), async (req, res, next) => {
     const token = req.cookies[Auth_1.TOKEN_COOKIE];
     try {
         const user = jwt.verify(token, constanst_1.JWTKEY);
         let userdb;
         // language=RegExp
         if (req.body.identifier.match("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})"))
-            userdb = await User_1.User.findOne({ CPF: req.body.identifier }).select({ password: 1, admin: 1, roles: 1 });
+            userdb = await User_1.User.findOne({ CPF: req.body.identifier });
         else
-            userdb = await User_1.User.findOne({ email: req.body.identifier }).select({ password: 1, admin: 1, roles: 1 });
+            userdb = await User_1.User.findOne({ email: req.body.identifier });
         if (!userdb) {
             return res.clearCookie(Auth_1.TOKEN_COOKIE).status(400).send('Invalid Token');
         }
         user.refreshToken = false;
         //@ts-ignore
         user.exp = new Date().getTime() + constanst_1.JWTTokenExpiration;
+        delete userdb.password;
         res.send({ token: jwt.sign(user, constanst_1.JWTKEY) });
     }
     catch (e) {
-        Logger_1.error(e);
         res.sendStatus(400);
     }
 });
-exports.router.get('/revoke', ((req, res, next) => {
+exports.router.post('/revoke', (async (req, res, next) => {
     const token = req.cookies[Auth_1.TOKEN_COOKIE];
     if (!token)
         return res.status(400).send('No cookie provided!');
     res.clearCookie(Auth_1.TOKEN_COOKIE);
+    try {
+        const uToken = jwt.verify(token, constanst_1.JWTKEY);
+        await API_1.clientApi.authorize(uToken.email, 0);
+    }
+    catch (e) {
+    }
 }));
+exports.router.get('/logged', (async (req, res, next) => {
+    const token = req.cookies[Auth_1.TOKEN_COOKIE];
+    if (!token)
+        return res.send({ logged: false });
+    try {
+        jwt.verify(token, constanst_1.JWTKEY);
+        res.send({ logged: true });
+    }
+    catch (e) {
+        return res.send({ logged: false });
+    }
+}));
+function validateIdentifier(body) {
+    return joi.validate(body, joi.object().keys({
+        identifier: joi.string().regex(new RegExp("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})|" + constanst_1.EmailREGEX)),
+    }));
+}
 function validationResult(body) {
     return joi.validate(body, joi.object().keys({
         identifier: joi.string().regex(new RegExp("([0-9]{3}[.]?[0-9]{3}[.]?[0-9]{3}-[0-9]{2})|([0-9]{11})|" + constanst_1.EmailREGEX)),
